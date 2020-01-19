@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Oxide.Core;
@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace Oxide.Plugins
 {
-    [Info("Quests", "k1lly0u", "2.2.7", ResourceId = 1084)]
+    [Info("Quests", "k1lly0u", "2.2.8", ResourceId = 1084)]
     [Description("Creates quests for players to go on to earn rewards, complete with a GUI menu")]
     public class Quests : RustPlugin
     {
@@ -62,7 +62,6 @@ namespace Oxide.Plugins
 
         private string textPrimary;
         private string textSecondary;
-
         #endregion
 
         #region Classes
@@ -165,18 +164,18 @@ namespace Oxide.Plugins
             static public CuiElementContainer CreateElementContainer(string panelName, string color, string aMin, string aMax, bool cursor = false)
             {
                 var NewElement = new CuiElementContainer()
-            {
                 {
-                    new CuiPanel
                     {
-                        Image = {Color = color},
-                        RectTransform = {AnchorMin = aMin, AnchorMax = aMax},
-                        CursorEnabled = cursor
-                    },
-                    new CuiElement().Parent = "Overlay",
-                    panelName
-                }
-            };
+                        new CuiPanel
+                        {
+                            Image = {Color = color},
+                            RectTransform = {AnchorMin = aMin, AnchorMax = aMax},
+                            CursorEnabled = cursor
+                        },
+                        new CuiElement().Parent = "Overlay",
+                        panelName
+                    }
+                };
                 return NewElement;
             }
             static public void CreatePanel(ref CuiElementContainer container, string panel, string color, string aMin, string aMax, bool cursor = false)
@@ -288,6 +287,7 @@ namespace Oxide.Plugins
                 }
             }
         }
+
         #region Objective Hooks
         //Kill
         void OnEntityDeath(BaseCombatEntity entity, HitInfo info)
@@ -340,6 +340,9 @@ namespace Oxide.Plugins
                 if (hasQuests(player.userID) && isQuestItem(player.userID, item.info.shortname, QuestType.Gather))
                     ProcessProgress(player, QuestType.Gather, item.info.shortname, item.amount);
         }
+
+        void OnDispenserBonus(ResourceDispenser dispenser, BaseEntity entity, Item item) => OnDispenserGather(dispenser, entity, item);
+
         void OnPlantGather(PlantEntity plant, Item item, BasePlayer player)
         {
             if (player != null)
@@ -412,6 +415,7 @@ namespace Oxide.Plugins
             }
         }
         #endregion
+
         object OnPlayerChat(ConsoleSystem.Arg arg)
         {
             if (BetterChat) return null;
@@ -432,7 +436,7 @@ namespace Oxide.Plugins
         {
             var player = (dict["Player"] as IPlayer).Object as BasePlayer;
             if (player == null) return null;
-            string message = dict["Text"].ToString();
+            string message = dict["Message"].ToString();
             if (ActiveEditors.ContainsKey(player.userID) || ActiveCreations.ContainsKey(player.userID) || AddVendor.ContainsKey(player.userID))
             {
                 QuestChat(player, message.Split(' '));
@@ -744,7 +748,6 @@ namespace Oxide.Plugins
             DisplayNames.Add("patrolhelicopter", "Helicopter");
             DisplayNames.Add("player", "Player");
         }
-
         #endregion
 
         #region Functions
@@ -910,9 +913,19 @@ namespace Oxide.Plugins
 
         private bool hasQuests(ulong player)
         {
-            if (PlayerProgress.ContainsKey(player))
-                return true;
-            return false;
+            try
+            {
+                if(PlayerProgress.ContainsKey(player))
+                {
+                    return true;
+                }
+                return false;
+            }
+            catch
+            {
+                Puts($"Error checking quests for {player}");
+                return false;
+            }
         }
         private bool isQuestItem(ulong player, string name, QuestType type)
         {
@@ -1195,7 +1208,6 @@ namespace Oxide.Plugins
             return withoutSelected[randNum];
         }
         private string LA(string key, string userID = null) => lang.GetMessage(key, this, userID);
-
         #endregion
 
         #region UI
@@ -1430,7 +1442,8 @@ namespace Oxide.Plugins
 
             }
             var rewards = GetRewardString(entry.Rewards);
-            var percent = Math.Round(Convert.ToDouble((float)prog[entry.QuestName].AmountCollected / (float)entry.AmountRequired), 0);
+            var percent = Math.Round(Convert.ToDouble((float)prog[entry.QuestName].AmountCollected / (float)entry.AmountRequired), 4);
+            //Puts($"Collected: {prog[entry.QuestName].AmountCollected.ToString()}, Required: {entry.AmountRequired.ToString()}, Pct: {percent.ToString()}");
             string stats = $"{textPrimary}{LA("Status:", player.UserIDString)}</color> {questStatus}";
             stats += $"\n{textPrimary}{LA("Quest Type:", player.UserIDString)} </color> {textSecondary}{prog[entry.QuestName].Type}</color>";
             stats += $"\n{textPrimary}{LA("Description:", player.UserIDString)} </color>{textSecondary}{entry.Description}</color>";
@@ -2704,7 +2717,6 @@ namespace Oxide.Plugins
         #endregion
 
         #region Chat Commands
-
         [ChatCommand("q")]
         void cmdOpenMenu(BasePlayer player, string command, string[] args)
         {
@@ -2789,7 +2801,6 @@ namespace Oxide.Plugins
             }
             else SendMSG(player, LA("noNPC", player.UserIDString));
         }
-
         #endregion
 
         #region Data Management
@@ -3074,7 +3085,7 @@ namespace Oxide.Plugins
             { "Required Amount:", "Required Amount:" },
             { "Item Deduction:", "Item Deduction:" },
             { "delHelMen", "Here you can add delivery missions and Quest vendors." },
-            { "delHelChoo", "Choose either a Deiver vendor (delivery mission) or a Quest vendor (npc based quest menu)" },
+            { "delHelChoo", "Choose either a Delivery vendor (delivery mission) or a Quest vendor (npc based quest menu)" },
             { "Quest Vendor", "Quest Vendor" },
             { "Delivery Vendor", "Delivery Vendor" },
             { "delHelNewNPC", "Stand infront of the NPC you wish to add and type" },
