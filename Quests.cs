@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace Oxide.Plugins
 {
-    [Info("Quests", "k1lly0u", "2.3.0", ResourceId = 1084)]
+    [Info("Quests", "k1lly0u", "2.3.1", ResourceId = 1084)]
     [Description("Creates quests for players to go on to earn rewards, complete with a GUI menu")]
     public class Quests : RustPlugin
     {
@@ -295,6 +295,11 @@ namespace Oxide.Plugins
             try
             {
                 if (entity == null || info == null) return;
+                string entname = entity?.ShortPrefabName;
+                if (entname == "testridablehorse")
+                {
+                    entname = "horse";
+                }
                 BasePlayer player = null;
 
                 if (info.InitiatorPlayer != null)
@@ -306,8 +311,8 @@ namespace Oxide.Plugins
                 {
                     if (entity.ToPlayer() != null && entity.ToPlayer() == player) return;
                     if (isPlaying(player)) return;
-                    if (hasQuests(player.userID) && isQuestItem(player.userID, entity?.ShortPrefabName, QuestType.Kill))
-                        ProcessProgress(player, QuestType.Kill, entity?.ShortPrefabName);
+                    if (hasQuests(player.userID) && isQuestItem(player.userID, entname, QuestType.Kill))
+                        ProcessProgress(player, QuestType.Kill, entname);
                 }
             }
             catch (Exception ex)
@@ -730,6 +735,7 @@ namespace Oxide.Plugins
             {
                 "bear",
                 "boar",
+                "bradleyapc",
                 "chicken",
                 "horse",
                 "stag",
@@ -742,6 +748,7 @@ namespace Oxide.Plugins
             };
             DisplayNames.Add("bear", "Bear");
             DisplayNames.Add("boar", "Boar");
+            DisplayNames.Add("bradleyapc", "BradleyAPC");
             DisplayNames.Add("chicken", "Chicken");
             DisplayNames.Add("horse", "Horse");
             DisplayNames.Add("stag", "Stag");
