@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace Oxide.Plugins
 {
-    [Info("Quests", "k1lly0u", "2.2.8", ResourceId = 1084)]
+    [Info("Quests", "k1lly0u", "2.2.9", ResourceId = 1084)]
     [Description("Creates quests for players to go on to earn rewards, complete with a GUI menu")]
     public class Quests : RustPlugin
     {
@@ -736,7 +736,8 @@ namespace Oxide.Plugins
                 "wolf",
                 "autoturret_deployed",
                 "patrolhelicopter",
-                "player"
+                "player",
+                "scientist"
             };
             DisplayNames.Add("bear", "Bear");
             DisplayNames.Add("boar", "Boar");
@@ -747,6 +748,7 @@ namespace Oxide.Plugins
             DisplayNames.Add("autoturret_deployed", "Auto-Turret");
             DisplayNames.Add("patrolhelicopter", "Helicopter");
             DisplayNames.Add("player", "Player");
+            DisplayNames.Add("scientist", "Scientist");
         }
         #endregion
 
