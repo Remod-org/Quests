@@ -64,7 +64,7 @@ Example: /questnpc Lakeside Vendor
 
 Config
 
-
+```json
 {
   "Colors": {
     "Background_Dark": {
@@ -109,3 +109,4 @@ Config
   },
   "UseNPCVendors": false
 }
+```
