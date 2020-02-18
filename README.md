@@ -1,6 +1,8 @@
-# Quests
+# Quests for Rust (Remod version)
 
 Create quests/missions for users to go on to earn rewards.
+
+[Download](https://code.remod.org/Quests.cs)
 
 This has been remade completely within GUI. All the quest creation/editing/removal is done through the GUI. Each page has its own instructions for use, therefore I won't need to explain how to use it here, it is essentially fool-proof.
 
