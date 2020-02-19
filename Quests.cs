@@ -421,18 +421,14 @@ namespace Oxide.Plugins
         }
         #endregion
 
-        object OnPlayerChat(ConsoleSystem.Arg arg)
+        object OnPlayerChat(BasePlayer player, string message, ConVar.Chat.ChatChannel channel)
         {
-            if (BetterChat) return null;
+            if(BetterChat) return null;
+            if(player == null) return null;
 
-            var player = arg.Connection.player as BasePlayer;
-            if (player == null)
-                return null;
-
-            if (ActiveEditors.ContainsKey(player.userID) || ActiveCreations.ContainsKey(player.userID) || AddVendor.ContainsKey(player.userID))
+            if(ActiveEditors.ContainsKey(player.userID) || ActiveCreations.ContainsKey(player.userID) || AddVendor.ContainsKey(player.userID))
             {
-                QuestChat(player,arg.Args);
-
+                QuestChat(player, message.Split(' '));
                 return false;
             }
             return null;
