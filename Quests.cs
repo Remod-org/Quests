@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace Oxide.Plugins
 {
-    [Info("Quests", "k1lly0u", "2.3.3", ResourceId = 1084)]
+    [Info("Quests", "k1lly0u/RFC1920", "2.3.4", ResourceId = 1084)]
     [Description("Creates quests for players to go on to earn rewards, complete with a GUI menu")]
     public class Quests : RustPlugin
     {
@@ -277,7 +277,7 @@ namespace Oxide.Plugins
                 DestroyUI(player);
             SavePlayerData();
         }
-        void OnPlayerInit(BasePlayer player)
+        void OnPlayerConnected(BasePlayer player)
         {
             if (configData.KeybindOptions.Autoset_KeyBind)
             {
@@ -348,7 +348,7 @@ namespace Oxide.Plugins
 
         void OnDispenserBonus(ResourceDispenser dispenser, BaseEntity entity, Item item) => OnDispenserGather(dispenser, entity, item);
 
-        void OnPlantGather(GrowableEntity plant, Item item, BasePlayer player)
+        void OnGrowableGather(GrowableEntity growable, Item item, BasePlayer player)
         {
             if (player != null)
                 if (hasQuests(player.userID) && isQuestItem(player.userID, item.info.shortname, QuestType.Gather))
