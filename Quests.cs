@@ -11,12 +11,13 @@ using System.Linq;
 
 namespace Oxide.Plugins
 {
-    [Info("Quests", "k1lly0u/RFC1920", "2.3.4", ResourceId = 1084)]
+    [Info("Quests", "k1lly0u/RFC1920", "2.3.5", ResourceId = 1084)]
     [Description("Creates quests for players to go on to earn rewards, complete with a GUI menu")]
     public class Quests : RustPlugin
     {
         #region Fields
         [PluginReference] Plugin HumanNPC;
+        [PluginReference] Plugin Humanoids;
         [PluginReference] Plugin ServerRewards;
         [PluginReference] Plugin Economics;
         [PluginReference] Plugin LustyMap;
@@ -158,7 +159,7 @@ namespace Oxide.Plugins
         #endregion
 
         #region UI Creation
-        class QUI
+        static class QUI
         {
             public static bool disableFade;
             static public CuiElementContainer CreateElementContainer(string panelName, string color, string aMin, string aMax, bool cursor = false)
@@ -305,19 +306,20 @@ namespace Oxide.Plugins
                 if (info.InitiatorPlayer != null)
                     player = info.InitiatorPlayer;
                 else if (entity.GetComponent<BaseHelicopter>() != null)
-                    player = BasePlayer.FindByID(GetLastAttacker(entity.net.ID));
+                    player = BasePlayer.FindByID(GetLastAttacker((uint)entity.net.ID.Value));
 
                 if (player != null)
                 {
-                    if (entity.ToPlayer() != null && entity.ToPlayer() == player) return;
-                    if (isPlaying(player)) return;
-                    if (hasQuests(player.userID) && isQuestItem(player.userID, entname, QuestType.Kill))
-                        ProcessProgress(player, QuestType.Kill, entname);
+                    if (player.net?.connection != null)
+                    {
+                        if (entity.ToPlayer() != null && entity.ToPlayer() == player) return;
+                        if (isPlaying(player)) return;
+                        if (hasQuests(player.userID) && isQuestItem(player.userID, entname, QuestType.Kill))
+                            ProcessProgress(player, QuestType.Kill, entname);
+                    }
                 }
             }
-            catch (Exception ex)
-            {
-            }
+            catch {}
         }
         void OnEntityTakeDamage(BaseCombatEntity victim, HitInfo info)
         {
@@ -329,11 +331,11 @@ namespace Oxide.Plugins
                 NextTick(() =>
                 {
                     if (heli == null) return;
-                    if (!HeliAttackers.ContainsKey(heli.net.ID))
-                        HeliAttackers.Add(heli.net.ID, new Dictionary<ulong, int>());
-                    if (!HeliAttackers[heli.net.ID].ContainsKey(player.userID))
-                        HeliAttackers[heli.net.ID].Add(player.userID, 0);
-                    HeliAttackers[heli.net.ID][player.userID]++;
+                    if (!HeliAttackers.ContainsKey((uint)heli.net.ID.Value))
+                        HeliAttackers.Add((uint)heli.net.ID.Value, new Dictionary<ulong, int>());
+                    if (!HeliAttackers[(uint)heli.net.ID.Value].ContainsKey(player.userID))
+                        HeliAttackers[(uint)heli.net.ID.Value].Add(player.userID, 0);
+                    HeliAttackers[(uint)heli.net.ID.Value][player.userID]++;
                 });
             }
         }
@@ -371,21 +373,21 @@ namespace Oxide.Plugins
         //Loot
         void OnItemAddedToContainer(ItemContainer container, Item item)
         {
-            if (Looters.ContainsKey(item.uid))
+            if (Looters.ContainsKey((uint)item.uid.Value))
             {
                 if (container.playerOwner != null)
                 {
-                    if (Looters[item.uid] != container.playerOwner.userID)
+                    if (Looters[(uint)item.uid.Value] != container.playerOwner.userID)
                     {
                         if (hasQuests(container.playerOwner.userID) && isQuestItem(container.playerOwner.userID, item.info.shortname, QuestType.Loot))
                         {
                             ProcessProgress(container.playerOwner, QuestType.Loot, item.info.shortname, item.amount);
-                            Looters.Remove(item.uid);
+                            Looters.Remove((uint)item.uid.Value);
                         }
                     }
                 }
             }
-            else if (container.playerOwner != null) Looters.Add(item.uid, container.playerOwner.userID);
+            else if (container.playerOwner != null) Looters.Add((uint)item.uid.Value, container.playerOwner.userID);
         }
         void OnItemRemovedFromContainer(ItemContainer container, Item item)
         {
@@ -395,8 +397,8 @@ namespace Oxide.Plugins
             else if (container.playerOwner != null)
                 id = container.playerOwner.userID;
 
-            if (!Looters.ContainsKey(item.uid))
-                Looters.Add(item.uid, id);
+            if (!Looters.ContainsKey((uint)item.uid.Value))
+                Looters.Add((uint)item.uid.Value, id);
         }
         // Delivery and Vendors
         void OnUseNPC(BasePlayer npc, BasePlayer player)
@@ -740,7 +742,8 @@ namespace Oxide.Plugins
                 "patrolhelicopter",
                 "player",
                 "scientist",
-                "murderer"
+                "murderer",
+                "scarecrow"
             };
             DisplayNames.Add("bear", "Bear");
             DisplayNames.Add("boar", "Boar");
@@ -754,6 +757,7 @@ namespace Oxide.Plugins
             DisplayNames.Add("player", "Player");
             DisplayNames.Add("scientist", "Scientist");
             DisplayNames.Add("murderer", "Murderer");
+            DisplayNames.Add("scarecrow", "Scarecrow");
         }
         #endregion
 
@@ -1231,7 +1235,7 @@ namespace Oxide.Plugins
             CreateMenuButton(ref MenuElement, UIMain, LA("Loot", player.UserIDString), "QUI_ChangeElement loot", i); i++;
             CreateMenuButton(ref MenuElement, UIMain, LA("Craft", player.UserIDString), "QUI_ChangeElement craft", i); i++;
             i++;
-            if (HumanNPC)
+            if (HumanNPC | Humanoids)
                 CreateMenuButton(ref MenuElement, UIMain, LA("Delivery", player.UserIDString), "QUI_ChangeElement delivery", i); i++;
             CreateMenuButton(ref MenuElement, UIMain, LA("Your Quests", player.UserIDString), "QUI_ChangeElement personal", i); i++;
 
@@ -1510,7 +1514,7 @@ namespace Oxide.Plugins
             CreateNewQuestButton(ref Main, UIPanel, LA("Gather", player.UserIDString), "QUI_NewQuest gather", i); i++;
             CreateNewQuestButton(ref Main, UIPanel, LA("Loot", player.UserIDString), "QUI_NewQuest loot", i); i++;
             CreateNewQuestButton(ref Main, UIPanel, LA("Craft", player.UserIDString), "QUI_NewQuest craft", i); i++;
-            if (HumanNPC)
+            if (HumanNPC | Humanoids)
                 CreateNewQuestButton(ref Main, UIPanel, LA("Delivery", player.UserIDString), "QUI_NewQuest delivery", i); i++;
 
             CuiHelper.AddUi(player, Main);
